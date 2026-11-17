@@ -37,7 +37,7 @@ def test_optimization_uses_training_cv_and_validation_only():
         validation_fraction=0.2,
         test_fraction=0.2,
     )
-    results, summaries, metadata, models = run_optimization(
+    results, summaries, metadata, models, trials = run_optimization(
         frame, splits, seed=7, n_trials=1, cv_folds=2
     )
     assert len(results) == 2
@@ -47,6 +47,7 @@ def test_optimization_uses_training_cv_and_validation_only():
     assert metadata["test_partition_used"] is False
     assert metadata["evaluation_partition"] == "validation"
     assert set(models) == set(summaries)
+    assert len(trials) == 2
     assert all(np.isfinite(results["average_precision"]))
     assert all(summary["n_trials"] == 1 for summary in summaries.values())
 
