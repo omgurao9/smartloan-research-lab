@@ -6,8 +6,6 @@
 | S00 | Completed | Create fixed stratified 70/15/15 partitions with dataset and split fingerprints. | One frozen split shared by all experiments; no test-set tuning |
 | B01 | Implemented | Compare Logistic Regression, Random Forest, and HistGradientBoosting on the frozen split. | Validation average precision; report threshold metrics and calibration losses |
 | B02 | Implemented | Measure the impact of removing previous-default history. | Paired validation comparison; test set remains untouched |
-| B01 | Planned | What are transparent baseline results on a fixed split? | Compare validation PR-AUC and calibration |
-| B02 | Planned | How much does previous-default history affect results? | Paired validation ablation; no test tuning |
 | O01 | Planned | Can Optuna improve the strongest baseline? | Training-only CV; validation model selection |
 | G01 | Planned | Do CatBoost and LightGBM improve over baseline? | Same split and metric protocol |
 | N01 | Planned | Do modern neural/in-context tabular models add value? | Feasibility, license, runtime and validation quality |
