@@ -11,5 +11,5 @@
 | G01 | Completed | Do CatBoost and LightGBM improve over the HistGradientBoosting reference? | Fixed reproducible configurations; same train/validation split; validation only |
 | G02 | Completed | Does XGBoost provide a useful comparison to the tuned HGB, LightGBM, and CatBoost references? | Fixed configuration; same frozen split; validation only; test set remains untouched |
 | N01 | Planned | Do modern neural/in-context tabular models add value? | Feasibility, license, runtime and validation quality |
-| E01 | Planned | Does leakage-safe stacking improve generalization? | Out-of-fold training predictions only |
+| E01 | Implemented | Does out-of-fold stacking of HGB, Random Forest, and LightGBM improve validation performance? | Meta-learner trained only on training-partition OOF probabilities; validation-only evaluation; test set remains untouched | Does leakage-safe stacking improve generalization? | Out-of-fold training predictions only |
 | F01 | Completed | Are LightGBM probabilities calibrated, and how do descriptive validation slices differ? | Sigmoid/isotonic calibration fitted by training-only CV; validation-only metrics and subgroup summaries; test set remains untouched | Are probabilities reliable and subgroup differences material? | Calibration and descriptive subgroup audit |
