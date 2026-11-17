@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import time
 
+import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +27,9 @@ FEATURES = FEATURE_SETS["full_features"]
 _model = None
 _model_error = None
 _fit_seconds = None
+_fit_rows = 0
+_reference_frame = None
+_class_counts = {}
 
 class Applicant(BaseModel):
     person_age: float = Field(gt=17, lt=84)
@@ -69,12 +73,30 @@ async def lifespan(app: FastAPI):
             )
         frame = pd.read_csv(DATA_PATH)
         split = pd.read_csv(SPLIT_PATH)
-        assignments = split[split["split"].isin(["train", "validation"])]
+        required = set(FEATURES + [TARGET])
+        missing = sorted(required - set(frame.columns))
+        if missing:
+            raise ValueError(f"Dataset is missing required model columns: {missing}")
+        if not {"original_row_index", "split", TARGET}.issubset(split.columns):
+            raise ValueError("Split file is missing required index/split/target columns.")
+        assignments = split[split["split"].isin(["train", "validation"])].copy()
         indices = assignments["original_row_index"].astype(int).to_numpy()
         if len(indices) == 0:
             raise ValueError("No training/validation rows in saved split.")
-        x_fit = frame.iloc[indices][FEATURES]
+        if len(np.unique(indices)) != len(indices):
+            raise ValueError("Duplicate row indices found in the fit partition.")
+        if indices.min() < 0 or indices.max() >= len(frame):
+            raise ValueError("Saved split indices fall outside the dataset.")
+        if not np.array_equal(frame.iloc[indices][TARGET].to_numpy(), assignments[TARGET].to_numpy()):
+            raise ValueError("Saved split labels do not match the raw dataset at those indices.")
+        x_fit = frame.iloc[indices][FEATURES].copy()
         y_fit = frame.iloc[indices][TARGET].astype(int).to_numpy()
+        if set(np.unique(y_fit)) != {0, 1}:
+            raise ValueError("The fit partition must contain both target classes.")
+        global _fit_rows, _reference_frame, _class_counts
+        _fit_rows = int(len(indices))
+        _reference_frame = frame.iloc[indices].copy()
+        _class_counts = {str(int(k)): int(v) for k, v in pd.Series(y_fit).value_counts().items()}
         cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
         estimator = CalibratedClassifierCV(
             estimator=build_base_estimator(FEATURES, seed=42),
@@ -113,6 +135,10 @@ def health():
         "fit_seconds": _fit_seconds,
         "model": "sigmoid_calibrated_lightgbm_full_features",
         "fit_partition": "train_plus_validation_only",
+        "fit_rows": _fit_rows,
+        "target_class_counts": _class_counts,
+        "target_mapping": {"0": "rejected (working interpretation)", "1": "approved (working interpretation)"},
+        "probability_note": "Model estimate of the synthetic dataset label, not a real-world approval probability.",
     }
 
 @app.post("/api/predict")
@@ -120,16 +146,49 @@ def predict(applicant: Applicant):
     if _model is None:
         raise HTTPException(503, _model_error or "Model is still loading.")
     features = applicant.features()
-    probability = float(_model.predict_proba(pd.DataFrame([features])[FEATURES])[0, 1])
-    threshold = 0.5
+    input_frame = pd.DataFrame([features], columns=FEATURES)
+    probabilities = _model.predict_proba(input_frame)[0]
+    classes = [int(value) for value in _model.classes_]
+    probability_by_class = {str(label): float(probabilities[index]) for index, label in enumerate(classes)}
+    if "1" not in probability_by_class or not np.isfinite(probabilities).all():
+        raise HTTPException(500, "The model returned an invalid probability vector.")
+    probability = probability_by_class["1"]
+    warnings = []
+    reference = _reference_frame
+    for field, label in (("person_income", "Annual income"), ("loan_amnt", "Loan amount"),
+                         ("credit_score", "Credit score"), ("cb_person_cred_hist_length", "Credit history")):
+        series = pd.to_numeric(reference[field], errors="coerce").dropna()
+        value = float(features[field])
+        low, high = float(series.quantile(.01)), float(series.quantile(.99))
+        if value < low or value > high:
+            warnings.append(f"{label} is outside the central 98% of values in the model's reference data.")
+    loan_ratio = float(features["loan_percent_income"])
+    ratio_ref = pd.to_numeric(reference["loan_percent_income"], errors="coerce").dropna()
+    if loan_ratio > float(ratio_ref.quantile(.99)):
+        warnings.append("Loan-to-income ratio is unusually high relative to the model's reference data.")
+    category_context = {}
+    for field in ("person_home_ownership", "loan_intent", "previous_loan_defaults_on_file"):
+        grouped = reference.groupby(field, dropna=False)[TARGET].agg(["count", "mean"])
+        key = str(features[field])
+        if key in grouped.index:
+            category_context[field] = {
+                "value": key,
+                "sample_count": int(grouped.loc[key, "count"]),
+                "observed_class_1_rate": float(grouped.loc[key, "mean"]),
+            }
     return {
         "class_1_probability": probability,
-        "threshold": threshold,
-        "decision": "APPROVED" if probability >= threshold else "NOT APPROVED",
+        "class_0_probability": probability_by_class.get("0"),
+        "threshold": 0.5,
+        "decision": "CLASS_1_MORE_LIKELY" if probability >= 0.5 else "CLASS_0_MORE_LIKELY",
         "target_label": "loan_status",
+        "model": "sigmoid_calibrated_lightgbm_full_features",
+        "input_checks": {"warnings": warnings, "loan_percent_income": loan_ratio},
+        "dataset_context": category_context,
         "disclaimer": (
-            "Academic estimate of the supplied dataset label only; not a real "
-            "lending decision or prediction of future repayment/default."
+            "This is an estimate of the recorded label in a synthetic/augmented "
+            "research dataset. It is not a real-world loan approval probability, "
+            "credit decision, or prediction of repayment/default."
         ),
     }
 
