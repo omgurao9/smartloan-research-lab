@@ -17,6 +17,7 @@ dependencies = [
   "matplotlib>=3.8",
   "seaborn>=0.13",
   "PyYAML>=6.0",
+  "optuna>=3.6",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +30,7 @@ explainability = ["shap>=0.45"]
 smartloan-audit = "research_lab.audit:main"
 smartloan-split = "research_lab.split:main"
 smartloan-baseline = "research_lab.baseline:main"
+smartloan-optimize = "research_lab.optimize:main"
 
 [tool.setuptools.packages.find]
 where = ["ml"]
