@@ -68,7 +68,7 @@ def audit_dataframe(frame: pd.DataFrame) -> dict[str, Any]:
                 "non_numeric_or_missing": int(series.isna().sum()),
             })
 
-    for column in frame.select_dtypes(include=["object", "category"]).columns:
+    for column in frame.select_dtypes(include=["object", "category", "str"]).columns:
         result["categorical_cardinality"][column] = {
             "unique_values": int(frame[column].nunique(dropna=False)),
             "top_values": _json_safe(frame[column].value_counts(dropna=False).head(20).to_dict()),
