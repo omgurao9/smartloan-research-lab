@@ -153,6 +153,12 @@ def predict(applicant: Applicant):
     if "1" not in probability_by_class or not np.isfinite(probabilities).all():
         raise HTTPException(500, "The model returned an invalid probability vector.")
     probability = probability_by_class["1"]
+    # Transparent demo-only affordability adjustment:
+    # +1 percentage point for each 1.0x annual-income / loan-amount ratio,
+    # capped at +10 percentage points. The underlying ML probability is retained.
+    income_to_loan_ratio = float(features["person_income"] / features["loan_amnt"])
+    affordability_adjustment_pp = min(10.0, income_to_loan_ratio)
+    adjusted_score = min(1.0, probability + affordability_adjustment_pp / 100.0)
     warnings = []
     reference = _reference_frame
     for field, label in (("person_income", "Annual income"), ("loan_amnt", "Loan amount"),
@@ -189,6 +195,10 @@ def predict(applicant: Applicant):
     }
     return {
         "class_1_probability": probability,
+        "adjusted_class_1_score": adjusted_score,
+        "income_to_loan_ratio": income_to_loan_ratio,
+        "affordability_adjustment_percentage_points": affordability_adjustment_pp,
+        "scoring_note": "Demo heuristic only: adds 1 percentage point per 1.0x annual-income/loan-amount ratio, capped at +10 points. This is not learned, calibrated, or validated as a lending rule.",
         "class_0_probability": probability_by_class.get("0"),
         "threshold": 0.5,
         "decision": "CLASS_1_MORE_LIKELY" if probability >= 0.5 else "CLASS_0_MORE_LIKELY",
