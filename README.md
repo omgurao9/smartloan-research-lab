@@ -83,6 +83,14 @@ Open `http://127.0.0.1:5173`. The API health endpoint is `http://127.0.0.1:8000/
 
 The first backend startup trains and caches the calibrated LightGBM using 38,242 training + validation rows, so allow it time to initialize. The raw dataset and frozen split must exist locally.
 
+### Application implementation notes
+
+- The web form sends the same 13 ordered predictors used by the frozen full-feature LightGBM pipeline. `loan_percent_income` is derived server-side from requested amount / annual income.
+- At startup, the API validates the split indices and verifies that the saved split labels match the raw dataset before fitting on train + validation only.
+- Prediction responses include both class probabilities, reference-data input-range warnings, and descriptive category/interest-rate associations. These are diagnostics, not causal explanations.
+- The dataset does not provide verified currency metadata. The applicant UI therefore labels monetary values as **dataset units**, not INR or USD. Do not interpret them as rupee amounts.
+- The app's probability estimates refer only to the recorded synthetic/augmented `loan_status` label. They are not real-world approval odds and must not be used to approve or reject actual applicants.
+
 ## Current status
 
 **Phase 1 — foundation and data audit.** The first milestone establishes project conventions and a reproducible audit. Model benchmarking begins only after the data audit and split protocol are reviewed.
