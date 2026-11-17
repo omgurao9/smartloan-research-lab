@@ -28,6 +28,7 @@ explainability = ["shap>=0.45"]
 [project.scripts]
 smartloan-audit = "research_lab.audit:main"
 smartloan-split = "research_lab.split:main"
+smartloan-baseline = "research_lab.baseline:main"
 
 [tool.setuptools.packages.find]
 where = ["ml"]
