@@ -26,7 +26,7 @@ from research_lab.optimize import FEATURE_SETS, TARGET
 
 def _encode_features(
     train: pd.DataFrame, other: pd.DataFrame, features: list[str]
-) -> tuple[np.ndarray, np.ndarray, list[int], dict[str, Any]]:
+) -> tuple[np.ndarray, np.ndarray, list[int], dict[str, Any], np.ndarray, np.ndarray]:
     numeric = [c for c in NUMERIC_FEATURES if c in features]
     categorical = [c for c in CATEGORICAL_FEATURES if c in features]
     train_num = train[numeric].apply(pd.to_numeric, errors="coerce")
@@ -86,7 +86,6 @@ def _fit_one(
     from torch.utils.data import DataLoader, TensorDataset
 
     torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
     indices = np.arange(len(y))
     fit_idx, stop_idx = train_test_split(
         indices, test_size=0.1, random_state=seed, stratify=y
