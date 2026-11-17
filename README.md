@@ -88,6 +88,7 @@ The first backend startup trains and caches the calibrated LightGBM using 38,242
 - The web form sends the same 13 ordered predictors used by the frozen full-feature LightGBM pipeline. `loan_percent_income` is derived server-side from requested amount / annual income.
 - At startup, the API validates the split indices and verifies that the saved split labels match the raw dataset before fitting on train + validation only.
 - Prediction responses include both class probabilities, reference-data input-range warnings, and descriptive category/interest-rate associations. These are diagnostics, not causal explanations.
+- The displayed income-to-loan adjusted score adds **1 percentage point per 1.0x** annual-income / loan-amount ratio, capped at **+10 percentage points**. The raw model estimate is shown separately. This is an explicitly disclosed demonstration heuristic—not a trained, calibrated, validated, or recommended lending rule.
 - The dataset does not provide verified currency metadata. The applicant UI therefore labels monetary values as **dataset units**, not INR or USD. Do not interpret them as rupee amounts.
 - The app's probability estimates refer only to the recorded synthetic/augmented `loan_status` label. They are not real-world approval odds and must not be used to approve or reject actual applicants.
 
