@@ -27,6 +27,7 @@ optimization = ["optuna>=3.6"]
 neural = ["tabm>=0.0.1"]
 explainability = ["shap>=0.45"]
 dashboard = ["streamlit>=1.36", "plotly>=5.22"]
+web = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]
 
 [project.scripts]
 smartloan-audit = "research_lab.audit:main"
