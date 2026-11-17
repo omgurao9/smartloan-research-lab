@@ -33,6 +33,7 @@ smartloan-baseline = "research_lab.baseline:main"
 smartloan-optimize = "research_lab.optimize:main"
 smartloan-boosting = "research_lab.boosting:main"
 smartloan-xgboost = "research_lab.xgboost_benchmark:main"
+smartloan-calibration-audit = "research_lab.calibration_audit:main"
 
 [tool.setuptools.packages.find]
 where = ["ml"]
