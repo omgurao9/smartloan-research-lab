@@ -176,6 +176,17 @@ def predict(applicant: Applicant):
                 "sample_count": int(grouped.loc[key, "count"]),
                 "observed_class_1_rate": float(grouped.loc[key, "mean"]),
             }
+    # Descriptive target-conditioned numeric summaries expose counterintuitive
+    # dataset associations without pretending they are causal explanations.
+    rate_by_class = reference.groupby(TARGET)["loan_int_rate"].agg(["count", "mean", "median"])
+    category_context["loan_int_rate"] = {
+        "value": float(features["loan_int_rate"]),
+        "class_0_mean": float(rate_by_class.loc[0, "mean"]),
+        "class_1_mean": float(rate_by_class.loc[1, "mean"]),
+        "class_0_median": float(rate_by_class.loc[0, "median"]),
+        "class_1_median": float(rate_by_class.loc[1, "median"]),
+        "note": "Observed association in the reference dataset only; interest-rate timing is unresolved.",
+    }
     return {
         "class_1_probability": probability,
         "class_0_probability": probability_by_class.get("0"),
