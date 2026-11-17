@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smartloan-research-lab"
+version = "0.1.0"
+description = "Reproducible model research for tabular loan-status classification"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "scikit-learn>=1.4",
+  "scipy>=1.11",
+  "joblib>=1.3",
+  "matplotlib>=3.8",
+  "seaborn>=0.13",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+boosting = ["xgboost>=2.0", "catboost>=1.2", "lightgbm>=4.3"]
+optimization = ["optuna>=3.6"]
+explainability = ["shap>=0.45"]
+
+[project.scripts]
+smartloan-audit = "research_lab.audit:main"
+
+[tool.setuptools.packages.find]
+where = ["ml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["ml"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
