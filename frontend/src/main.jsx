@@ -10,7 +10,7 @@ async function request(path,options){const r=await fetch(API+path,options);const
 function Field({label,children,hint}){return <label className="field"><span>{label}</span>{children}{hint&&<small>{hint}</small>}</label>}
 function App(){
  const [form,setForm]=useState(initial),[step,setStep]=useState(0),[result,setResult]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(""),[online,setOnline]=useState(false);
- useEffect(()=>{request("/health").then(x=>setOnline(Boolean(x.model_available))).catch(()=>setOnline(false))},[]);
+ useEffect(()=>{let active=true;const check=()=>request("/health").then(x=>{if(active)setOnline(Boolean(x.model_available))}).catch(()=>{if(active)setOnline(false)});check();const timer=setInterval(check,3000);return()=>{active=false;clearInterval(timer)}},[]);
  const update=(key,value)=>setForm(p=>({...p,[key]:value}));
  const valid=()=>{
   if(step===0 && (form.person_age<18||form.person_age>=84||form.person_emp_exp>form.person_age-18))return "Please check your age and employment experience.";
@@ -23,7 +23,7 @@ function App(){
  function reset(){setResult(null);setStep(0);setError("");setForm(initial);window.scrollTo({top:0,behavior:"smooth"})}
  const progress=result?100:(step+1)*33.333;
  return <div className="site">
-  <header className="site-header"><a className="wordmark" href="#"><span className="logo-mark">s</span><span>smartloan<span className="wordmark-dot">.</span></span></a><nav className="header-nav"><a href="#how-it-works">How it works</a><a href="#about">About this demo</a></nav><div className="secure-label"><LockKeyhole size={14}/> Secure demo</div></header>
+  <header className="site-header"><a className="wordmark" href="#"><span className="logo-mark">s</span><span>smartloan<span className="wordmark-dot">.</span></span></a><nav className="header-nav"><a href="#how-it-works">How it works</a><a href="#about">About this demo</a></nav><div className="secure-label"><LockKeyhole size={14}/> Local demo</div></header>
   <main>
    <section className="hero"><div className="hero-copy"><div className="eyebrow"><span className="eyebrow-dot"/> A simpler way to explore your options</div><h1>A little closer to<br/><em>your next big step.</em></h1><p className="hero-text">Share a few details and explore an indicative loan assessment. It takes just a couple of minutes.</p><div className="hero-points"><div><ShieldCheck/><span><b>Your details stay local</b><small>This demo does not send an application to a lender.</small></span></div><div><FileText/><span><b>Simple, guided steps</b><small>Just the information needed for this assessment.</small></span></div></div></div>
     <div className="hero-art" aria-hidden="true"><div className="art-orbit orbit-one"/><div className="art-orbit orbit-two"/><div className="art-card"><div className="art-card-top"><span>YOUR FINANCIAL JOURNEY</span><span className="art-chip"><Sparkles size={13}/></span></div><div className="art-card-title">Make room<br/>for what's next.</div><div className="art-card-bottom"><div className="art-bars"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><span>ONE STEP AT A TIME</span></div></div><div className="floating-pill"><CheckCircle2 size={16}/> A clearer picture</div></div>
