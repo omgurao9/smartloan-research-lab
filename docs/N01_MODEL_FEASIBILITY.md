@@ -2,7 +2,7 @@
 
 ## Objective
 
-Determine which modern tabular models are suitable for a controlled comparison on the frozen loan-status benchmark. This phase is a feasibility and protocol gate; no model has been run and no validation result is claimed here.
+Determine which modern tabular models are suitable for a controlled comparison on the frozen loan-status benchmark. This phase is a feasibility and protocol gate; results are only reported when a complete, reproducible validation run finishes.
 
 ## Dataset and hardware constraints
 
@@ -10,20 +10,27 @@ Determine which modern tabular models are suitable for a controlled comparison o
 - Frozen training partition: 31,493 rows; validation: 6,749 rows; test: 6,749 rows.
 - Feature sets: full (13 predictors) and conservative (11 predictors, excluding previous-default history and interest rate).
 - User environment: Windows 11, Python 3.12, RTX 3050 6 GB, 16 GB RAM.
-- Prefer a CPU-compatible, reproducible benchmark. Do not assume CUDA is available or required.
+- Installed PyTorch build: 2.15.0+cpu; `torch.cuda.is_available()` returned `False`. The installed environment therefore cannot use the RTX 3050 through PyTorch.
 - Keep the test partition unopened.
 
 ## Candidate assessment
 
-### TabICLv2 — primary in-context candidate
+### TabICLv2 — attempted; not computationally feasible in the current environment
 
-The official TabICL documentation describes a pretrained transformer for tabular classification and regression, with training-set examples supplied as context at prediction time. Its documented pretraining range is 300–60,000 training samples and 2–100 columns. The frozen training partition (31,493 rows) and the two feature sets are within those documented ranges. The documentation states that CPU inference is supported, while a GPU is recommended for larger datasets or faster prediction.
+The official TabICL documentation describes a pretrained transformer for tabular classification and regression, with training-set examples supplied as context at prediction time. Its documented pretraining range is 300–60,000 training samples and 2–100 columns. The frozen training partition (31,493 rows) and the two feature sets are within those documented ranges.
 
-The official project describes the implementation as open source with a permissive license. Verify the exact installed package and model-checkpoint license at execution time and record the versions. Candidate: `tabicl`.
+The package installed and the default checkpoint `tabicl-classifier-v2-20260212.ckpt` downloaded successfully. The benchmark completed model fitting on the 31,493-row training partition. However, validation inference did not complete:
 
-### TabM — primary train-from-scratch neural candidate
+- Initial run: inference on all 6,749 validation rows was interrupted while executing PyTorch scaled dot-product attention.
+- Reduced run: `n_estimators=1`, `n_jobs=1` still stalled in the same attention operation.
+- Chunked run: prediction batches of 32 still did not complete the first batch; the traceback again ended inside `torch.nn.functional.scaled_dot_product_attention`.
+- Hardware diagnostic: PyTorch 2.15.0+cpu; CUDA unavailable. The GPU cannot be used by this installed PyTorch build.
 
-TabM is an ICLR 2025 tabular deep-learning architecture that uses parameter-efficient ensembling with shared weights. The official repository describes parallel predictions and shared parameters as central design choices. Its package declares PyTorch and numerical-embedding dependencies and uses the Apache Software License. It is a reasonable neural candidate, but CPU runtime and training stability must be measured rather than assumed.
+No TabICL validation metrics were produced. This is recorded as a hardware/runtime feasibility limitation, not as a poor predictive result or a model failure. Do not report a TabICL score or compare it as a completed benchmark. A future rerun requires a compatible CUDA-enabled PyTorch environment or a sufficiently capable CPU/runtime setup, followed by a complete validation run.
+
+### TabM — pending
+
+TabM is an ICLR 2025 tabular deep-learning architecture that uses parameter-efficient ensembling with shared weights. The official repository describes parallel predictions and shared parameters as central design choices. Its package declares PyTorch and numerical-embedding dependencies and uses the Apache Software License. It remains a candidate, but CPU runtime and training stability must be measured rather than assumed.
 
 Candidate: `tabm` with PyTorch. Use a fixed, predeclared training budget and early stopping based only on a training-internal validation fold; do not tune against the frozen validation partition.
 
@@ -34,18 +41,20 @@ Current TabPFN model-weight releases include non-commercial restrictions for new
 ## N01 experimental protocol
 
 1. Freeze the current split and feature definitions. Use only the training partition to fit models.
-2. Run TabICLv2 and TabM separately on full and conservative feature sets.
+2. Run TabICLv2 and TabM separately on full and conservative feature sets, if the hardware permits.
 3. Keep all preprocessing fit on training data. Handle categorical columns using each model's documented native interface; do not one-hot encode blindly if the estimator expects categorical inputs.
 4. Fix seeds and record package, checkpoint, Python, PyTorch, scikit-learn, hardware, device, elapsed fit/predict time, peak memory where measurable, and model configuration.
 5. Evaluate each fitted model once on the frozen validation partition. Report the same ranking, threshold, and probability metrics used in prior phases.
 6. Do not select hyperparameters, thresholds, or feature sets using the test partition.
-7. Compare each neural/in-context candidate with the leading references: F01 calibrated LightGBM and G01 LightGBM; report the conservative results separately.
+7. Compare completed neural/in-context candidates with the leading references: F01 calibrated LightGBM and G01 LightGBM; report the conservative results separately.
 8. Do not declare a winner from a tiny single-split metric difference. Consider runtime, memory, reproducibility, license, and probability quality alongside average precision.
 9. Keep model-weight licenses and third-party dependencies documented independently from the research-code license.
 
 ## Feasibility decision
 
-Proceed with TabICLv2 and TabM as the two N01 candidates. Defer TabPFN pending model-specific license review. This is a research-only benchmark of the recorded `loan_status` label, not a real-world lending, repayment, or default-prediction evaluation.
+TabICLv2 was installed and its checkpoint downloaded, but validation inference was computationally infeasible in the available CPU-only PyTorch environment. No TabICL score is claimed. TabM remains pending and may be attempted only if time and compute allow. TabPFN remains deferred pending model-specific license review.
+
+This is a research-only benchmark of the recorded `loan_status` label, not a real-world lending, repayment, or default-prediction evaluation.
 
 ## References
 
