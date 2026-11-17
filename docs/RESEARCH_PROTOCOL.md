@@ -6,7 +6,7 @@ Compare tabular classifiers for the observed `loan_status` label while investiga
 
 ## Claims policy
 
-Until the dataset source and label definition are independently verified, describe the task as **loan-status label classification**. Do not call the positive class an approved loan, future default, repayment, or credit-risk event unless the source documentation establishes that meaning.
+Current working interpretation, supported by multiple independent descriptions of this exact dataset: `loan_status = 1` means approved and `loan_status = 0` means rejected. Treat the data as a synthetic/augmented loan-approval benchmark, not real-world lending records. The original Kaggle data card did not expose readable metadata during review, so retain this as a documented working interpretation. Do not describe the task as future default or repayment prediction. See `docs/DATA_PROVENANCE.md`.
 
 ## Phase gates
 
