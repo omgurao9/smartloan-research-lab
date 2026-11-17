@@ -126,7 +126,7 @@ def run_optimization(
     seed: int = 42,
     n_trials: int = 25,
     cv_folds: int = 3,
-) -> tuple[pd.DataFrame, dict[str, Any], dict[str, Any], dict[str, Pipeline]]:
+) -> tuple[pd.DataFrame, dict[str, Any], dict[str, Any], dict[str, Pipeline], pd.DataFrame]:
     """Tune full and conservative HGB models; evaluate each once on validation."""
     if n_trials < 1:
         raise ValueError("n_trials must be at least 1.")
@@ -175,9 +175,10 @@ def run_optimization(
     rows: list[dict[str, Any]] = []
     summaries: dict[str, Any] = {}
     models: dict[str, Pipeline] = {}
+    trial_history: list[pd.DataFrame] = []
 
     for feature_set_name, features in FEATURE_SETS.items():
-        best, _, study = optimize_feature_set(
+        best, trial_frame, study = optimize_feature_set(
             frame.iloc[train_rows],
             y_train,
             features=features,
@@ -186,6 +187,7 @@ def run_optimization(
             n_trials=n_trials,
             cv_folds=cv_folds,
         )
+        trial_history.append(trial_frame)
         final_model = _make_pipeline(features, best["best_params"], seed)
         final_model.fit(frame.iloc[train_rows][features], y_train)
         probabilities = final_model.predict_proba(
@@ -222,7 +224,8 @@ def run_optimization(
         "optuna_version": optuna.__version__,
         "feature_sets": list(FEATURE_SETS),
     }
-    return pd.DataFrame(rows), summaries, metadata, models
+    all_trials = pd.concat(trial_history, ignore_index=True)
+    return pd.DataFrame(rows), summaries, metadata, models, all_trials
 
 
 def main() -> None:
@@ -237,7 +240,7 @@ def main() -> None:
 
     frame = pd.read_csv(args.input)
     splits = pd.read_csv(args.splits)
-    results, summaries, metadata, models = run_optimization(
+    results, summaries, metadata, models, trials = run_optimization(
         frame,
         splits,
         seed=args.seed,
@@ -252,6 +255,7 @@ def main() -> None:
     metadata["dataset_sha256"] = sha256_file(args.input)
     metadata["split_sha256"] = sha256_file(args.splits)
     results.to_csv(output_dir / "validation_metrics.csv", index=False)
+    trials.to_csv(output_dir / "trials.csv", index=False)
     (output_dir / "best_params.json").write_text(
         json.dumps(summaries, indent=2), encoding="utf-8"
     )
