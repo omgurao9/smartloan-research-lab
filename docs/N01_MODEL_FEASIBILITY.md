@@ -28,11 +28,38 @@ The package installed and the default checkpoint `tabicl-classifier-v2-20260212.
 
 No TabICL validation metrics were produced. This is recorded as a hardware/runtime feasibility limitation, not as a poor predictive result or a model failure. Do not report a TabICL score or compare it as a completed benchmark. A future rerun requires a compatible CUDA-enabled PyTorch environment or a sufficiently capable CPU/runtime setup, followed by a complete validation run.
 
-### TabM — pending
+### TabM — completed initial CPU benchmark
 
-TabM is an ICLR 2025 tabular deep-learning architecture that uses parameter-efficient ensembling with shared weights. The official repository describes parallel predictions and shared parameters as central design choices. Its package declares PyTorch and numerical-embedding dependencies and uses the Apache Software License. It remains a candidate, but CPU runtime and training stability must be measured rather than assumed.
+TabM is an ICLR 2025 tabular deep-learning architecture that uses parameter-efficient ensembling with shared weights. The benchmark used the official `tabm` package with PyTorch on CPU.
 
-Candidate: `tabm` with PyTorch. Use a fixed, predeclared training budget and early stopping based only on a training-internal validation fold; do not tune against the frozen validation partition.
+Configuration:
+- Seed: 42.
+- Maximum epochs: 12; patience: 3.
+- Ensemble size parameter: k=8.
+- Architecture: d_block=128, n_blocks=2.
+- Batch size: 512.
+- Device: CPU; one PyTorch CPU thread.
+- Early stopping: 10% stratified holdout taken only from the training partition. The frozen validation partition was not used for epoch selection.
+- Preprocessing: numeric medians and standardization fit on the training partition; categorical integer maps fit on the training partition. Unseen validation categories map to the first training category.
+- Both feature sets used the same frozen 31,493-row training and 6,749-row validation partitions.
+
+Validation results:
+
+| Feature set | PR-AUC | ROC-AUC | Accuracy | Balanced accuracy | Precision | Recall | F1 | MCC | Log loss | Brier |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Full (13 features) | 0.904513 | 0.964876 | 0.915691 | 0.849616 | 0.869151 | 0.730667 | 0.793915 | 0.745831 | 0.188814 | 0.060042 |
+| Conservative (11 features) | 0.713664 | 0.820647 | 0.868277 | 0.721761 | 0.900393 | 0.458000 | 0.607159 | 0.582328 | 0.356433 | 0.106824 |
+
+Fit times were 30.142 seconds (full) and 29.330 seconds (conservative). Both runs reached the 12-epoch maximum; therefore the configured early-stopping patience did not terminate training early.
+
+Interpretation:
+- TabM provides a valid completed validation benchmark on this CPU setup.
+- Full-feature PR-AUC (0.904513) is below the strongest completed boosting/calibration references: calibrated LightGBM sigmoid (0.935666) and LightGBM (0.935489).
+- Conservative-feature PR-AUC (0.713664) is also below the conservative LightGBM reference (0.789088) and conservative calibrated LightGBM sigmoid (0.788079).
+- At the fixed 0.5 threshold, TabM's recall is lower than the boosting references; do not interpret accuracy alone as model superiority.
+- This is one seed and one limited 12-epoch training budget. It is a benchmark result, not evidence that TabM is intrinsically inferior under all tuning budgets. No repeated-seed uncertainty or statistical significance analysis was performed.
+- No test-set rows were used. Results describe prediction of the dataset's recorded `loan_status` label only.
+
 
 ### TabPFN — defer from this phase
 
@@ -52,7 +79,7 @@ Current TabPFN model-weight releases include non-commercial restrictions for new
 
 ## Feasibility decision
 
-TabICLv2 was installed and its checkpoint downloaded, but validation inference was computationally infeasible in the available CPU-only PyTorch environment. No TabICL score is claimed. TabM remains pending and may be attempted only if time and compute allow. TabPFN remains deferred pending model-specific license review.
+TabICLv2 was installed and its checkpoint downloaded, but validation inference was computationally infeasible in the available CPU-only PyTorch environment. No TabICL score is claimed. TabM completed an initial CPU benchmark on both feature sets; its validation results are below the leading LightGBM references under the tested 12-epoch configuration. TabPFN remains deferred pending model-specific license review.
 
 This is a research-only benchmark of the recorded `loan_status` label, not a real-world lending, repayment, or default-prediction evaluation.
 
