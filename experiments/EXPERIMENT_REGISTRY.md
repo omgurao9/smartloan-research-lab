@@ -12,4 +12,4 @@
 | G02 | Completed | Does XGBoost provide a useful comparison to the tuned HGB, LightGBM, and CatBoost references? | Fixed configuration; same frozen split; validation only; test set remains untouched |
 | N01 | Planned | Do modern neural/in-context tabular models add value? | Feasibility, license, runtime and validation quality |
 | E01 | Planned | Does leakage-safe stacking improve generalization? | Out-of-fold training predictions only |
-| F01 | Planned | Are probabilities reliable and subgroup differences material? | Calibration and descriptive subgroup audit |
+| F01 | Implemented | Are LightGBM probabilities calibrated, and how do descriptive validation slices differ? | Sigmoid/isotonic calibration fitted by training-only CV; validation-only metrics and subgroup summaries; test set remains untouched | Are probabilities reliable and subgroup differences material? | Calibration and descriptive subgroup audit |
