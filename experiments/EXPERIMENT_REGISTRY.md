@@ -12,4 +12,4 @@
 | G02 | Completed | Does XGBoost provide a useful comparison to the tuned HGB, LightGBM, and CatBoost references? | Fixed configuration; same frozen split; validation only; test set remains untouched |
 | F01 | Completed | Are LightGBM probabilities calibrated, and how do descriptive validation slices differ? | Sigmoid/isotonic calibration fitted by training-only CV; validation-only metrics and subgroup summaries; test set remains untouched |
 | E01 | Completed | Does out-of-fold stacking of HGB, Random Forest, and LightGBM improve validation performance? | Meta-learner trained only on training-partition OOF probabilities; validation-only evaluation; test set remains untouched |
-| N01 | Planned | Do modern neural/in-context tabular models add value? | Feasibility, license, runtime and validation quality |
+| N01 | Protocol defined | Do neural and in-context tabular models add value over the boosting references? | TabICLv2 and TabM; frozen split; training-only fitting; validation-only evaluation; record compute and license details; test set remains untouched |
