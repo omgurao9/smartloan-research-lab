@@ -3,7 +3,6 @@ import pandas as pd
 
 from research_lab.optimize import FEATURE_SETS
 from research_lab.split import prepare_split
-from research_lab.stacking import run_stacking
 from research_lab.tabicl_benchmark import run_tabicl
 
 
