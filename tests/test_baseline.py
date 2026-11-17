@@ -27,7 +27,7 @@ def make_frame(n=120):
     return pd.DataFrame(rows)
 
 
-def test_baseline_runs_full_and_ablated_features_without_test_partition():
+def test_baseline_runs_four_feature_sets_without_test_partition():
     frame = make_frame()
     splits, _ = prepare_split(
         frame,
@@ -36,9 +36,12 @@ def test_baseline_runs_full_and_ablated_features_without_test_partition():
         test_fraction=0.2,
     )
     results, metadata = run_benchmarks(frame, splits, seed=7)
-    assert len(results) == 6
+    assert len(results) == 12
     assert set(results["feature_set"]) == {
-        "full_features", "without_previous_defaults"
+        "full_features",
+        "without_previous_defaults",
+        "without_interest_rate",
+        "conservative_no_defaults_no_rate",
     }
     assert metadata["test_partition_used"] is False
     assert set(results["model"]) == {
