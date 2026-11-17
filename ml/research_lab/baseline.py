@@ -169,9 +169,17 @@ def run_benchmarks(
 
     feature_sets = {
         "full_features": NUMERIC_FEATURES + CATEGORICAL_FEATURES,
-        "without_previous_defaults": NUMERIC_FEATURES + [
-            feature for feature in CATEGORICAL_FEATURES
+        "without_previous_defaults": [
+            feature for feature in NUMERIC_FEATURES + CATEGORICAL_FEATURES
             if feature != "previous_loan_defaults_on_file"
+        ],
+        "without_interest_rate": [
+            feature for feature in NUMERIC_FEATURES + CATEGORICAL_FEATURES
+            if feature != "loan_int_rate"
+        ],
+        "conservative_no_defaults_no_rate": [
+            feature for feature in NUMERIC_FEATURES + CATEGORICAL_FEATURES
+            if feature not in {"previous_loan_defaults_on_file", "loan_int_rate"}
         ],
     }
     y_train = frame.iloc[train_rows.to_numpy()][TARGET].astype(int)
