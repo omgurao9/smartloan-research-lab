@@ -13,6 +13,7 @@ venv/
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
+!data/raw/loan_data.csv
 !data/processed/.gitkeep
 models/
 artifacts/
