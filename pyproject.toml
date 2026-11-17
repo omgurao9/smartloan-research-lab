@@ -26,6 +26,7 @@ boosting = ["xgboost>=2.0", "catboost>=1.2", "lightgbm>=4.3"]
 optimization = ["optuna>=3.6"]
 neural = ["tabm>=0.0.1"]
 explainability = ["shap>=0.45"]
+dashboard = ["streamlit>=1.36", "plotly>=5.22"]
 
 [project.scripts]
 smartloan-audit = "research_lab.audit:main"
