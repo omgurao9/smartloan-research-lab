@@ -3,6 +3,7 @@
 | ID | Status | Question | Decision rule |
 |---|---|---|---|
 | A00 | Completed (provenance review pending) | Is the source dataset structurally valid and what are its label/feature relationships? | Complete audit and review before modeling |
+| S00 | Implemented | Create fixed stratified 70/15/15 partitions with dataset and split fingerprints. | One frozen split shared by all experiments; no test-set tuning |
 | B01 | Planned | What are transparent baseline results on a fixed split? | Compare validation PR-AUC and calibration |
 | B02 | Planned | How much does previous-default history affect results? | Paired validation ablation; no test tuning |
 | O01 | Planned | Can Optuna improve the strongest baseline? | Training-only CV; validation model selection |
