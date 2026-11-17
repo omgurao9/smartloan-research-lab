@@ -38,6 +38,7 @@ smartloan-calibration-audit = "research_lab.calibration_audit:main"
 smartloan-stacking = "research_lab.stacking:main"
 smartloan-tabicl = "research_lab.tabicl_benchmark:main"
 smartloan-tabm = "research_lab.tabm_benchmark:main"
+smartloan-final-test = "research_lab.final_evaluation:main"
 
 [tool.setuptools.packages.find]
 where = ["ml"]
