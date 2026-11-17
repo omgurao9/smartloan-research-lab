@@ -8,7 +8,7 @@
 | B02 | Completed | Measure the impact of removing previous-default history. | Paired validation comparison; test set remains untouched |
 | V01 | Completed | Isolate the effects of removing previous-default history and interest rate, individually and jointly. | Four paired feature sets; validation only; test set remains untouched |
 | O01 | Completed | Can Optuna improve HistGradientBoosting for full and conservative feature sets? | 25 trials each; three-fold stratified CV within training only; validation evaluation after tuning |
-| G01 | Implemented | Do CatBoost and LightGBM improve over the HistGradientBoosting reference? | Fixed reproducible configurations; same train/validation split; validation only |
+| G01 | Completed | Do CatBoost and LightGBM improve over the HistGradientBoosting reference? | Fixed reproducible configurations; same train/validation split; validation only |
 | N01 | Planned | Do modern neural/in-context tabular models add value? | Feasibility, license, runtime and validation quality |
 | E01 | Planned | Does leakage-safe stacking improve generalization? | Out-of-fold training predictions only |
 | F01 | Planned | Are probabilities reliable and subgroup differences material? | Calibration and descriptive subgroup audit |
