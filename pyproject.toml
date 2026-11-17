@@ -31,6 +31,7 @@ smartloan-audit = "research_lab.audit:main"
 smartloan-split = "research_lab.split:main"
 smartloan-baseline = "research_lab.baseline:main"
 smartloan-optimize = "research_lab.optimize:main"
+smartloan-boosting = "research_lab.boosting:main"
 
 [tool.setuptools.packages.find]
 where = ["ml"]
