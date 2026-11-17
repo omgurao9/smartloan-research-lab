@@ -52,6 +52,23 @@ scripts/                 Reproducible command-line entry points
 tests/                   Automated tests
 ```
 
+## Local application and research dashboard
+
+The Streamlit frontend includes an interactive **Loan Application** page as well as research-results pages. Applicants can enter personal, employment, financial, loan, and credit-profile details and receive a prediction from the selected sigmoid-calibrated LightGBM model.
+
+The application trains/caches that model locally on the frozen training + validation rows when first needed. It requires the local raw dataset and frozen split file. It does not access the held-out test partition for fitting or prediction.
+
+Install the UI dependencies and launch from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[dashboard,boosting]"
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Open the local URL printed by Streamlit (normally `http://localhost:8501`). Use the **Loan Application** page in the sidebar to enter an application; the main page and other navigation entries present experiment results.
+
+The application is an academic demonstration of the recorded `loan_status` label, not a real bank approval or future-default prediction system. Feature provenance and decision-time validity remain unresolved.
+
 ## Local research dashboard
 
 A Streamlit frontend is included at `app.py`. It presents the completed experiment journey, final test metrics, model comparisons, confusion matrices, and bootstrap confidence intervals.
