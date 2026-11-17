@@ -29,11 +29,17 @@ def run_tabicl(
     n_estimators: int = 4,
     device: str = "cpu",
     n_jobs: int = 4,
+    prediction_batch_size: int = 64,
     estimator_class: Any | None = None,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Fit TabICLv2 on train rows and evaluate validation rows only."""
-    if n_estimators < 1 or n_jobs < 1:
-        raise ValueError("n_estimators and n_jobs must be positive.")
+    """Fit TabICLv2 on train rows and evaluate validation rows only.
+
+    Validation inference is chunked to bound peak attention-memory use on
+    consumer hardware. The fitted training context and validation population
+    are unchanged; chunking only changes how query rows are submitted.
+    """
+    if n_estimators < 1 or n_jobs < 1 or prediction_batch_size < 1:
+        raise ValueError("n_estimators, n_jobs, and prediction_batch_size must be positive.")
     required = set(NUMERIC_FEATURES + CATEGORICAL_FEATURES + [TARGET])
     missing = sorted(required - set(frame.columns))
     if missing:
@@ -72,6 +78,7 @@ def run_tabicl(
     rows: list[dict[str, Any]] = []
     timings: dict[str, float] = {}
     for feature_set_name, features in FEATURE_SETS.items():
+        print(f"[TabICL] Feature set: {feature_set_name}; fitting on {len(train_rows):,} rows", flush=True)
         x_train = frame.iloc[train_rows][features].copy()
         x_validation = frame.iloc[validation_rows][features].copy()
         model = estimator_class(
@@ -82,10 +89,24 @@ def run_tabicl(
         )
         started = time.perf_counter()
         model.fit(x_train, y_train)
-        probabilities = np.asarray(model.predict_proba(x_validation))
+        print(
+            f"[TabICL] {feature_set_name}: fit complete; predicting "
+            f"{len(validation_rows):,} validation rows in batches of {prediction_batch_size}",
+            flush=True,
+        )
+        probability_batches: list[np.ndarray] = []
+        for start in range(0, len(x_validation), prediction_batch_size):
+            stop = min(start + prediction_batch_size, len(x_validation))
+            batch = np.asarray(model.predict_proba(x_validation.iloc[start:stop]))
+            if batch.ndim != 2 or batch.shape[0] != stop - start:
+                raise ValueError("TabICL returned an unexpected probability array shape.")
+            probability_batches.append(batch)
+            print(
+                f"[TabICL] {feature_set_name}: predicted {stop:,}/{len(x_validation):,}",
+                flush=True,
+            )
+        probabilities = np.concatenate(probability_batches, axis=0)
         elapsed = time.perf_counter() - started
-        if probabilities.ndim != 2 or probabilities.shape[0] != len(y_validation):
-            raise ValueError("TabICL returned an unexpected probability array shape.")
         classes = list(model.classes_)
         if 1 not in classes:
             raise ValueError("TabICL estimator did not expose positive class 1.")
@@ -97,6 +118,7 @@ def run_tabicl(
             "n_features": len(features),
             "n_estimators": n_estimators,
             "device": device,
+            "prediction_batch_size": prediction_batch_size,
             "fit_and_validation_seconds": round(elapsed, 3),
         }
         row.update(evaluate_validation(pd.Series(y_validation), positive_probabilities))
@@ -113,6 +135,7 @@ def run_tabicl(
         "n_estimators": n_estimators,
         "device": device,
         "n_jobs": n_jobs,
+        "prediction_batch_size": prediction_batch_size,
         "train_rows": int(len(train_rows)),
         "validation_rows": int(len(validation_rows)),
         "python_version": platform.python_version(),
@@ -132,15 +155,17 @@ def main() -> None:
     parser.add_argument("--splits", type=Path, default=Path("data/processed/split_indices.csv"))
     parser.add_argument("--output", type=Path, default=Path("experiments/results/tabicl"))
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--n-estimators", type=int, default=4)
+    parser.add_argument("--n-estimators", type=int, default=1)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
-    parser.add_argument("--n-jobs", type=int, default=4)
+    parser.add_argument("--n-jobs", type=int, default=1)
+    parser.add_argument("--prediction-batch-size", type=int, default=64)
     args = parser.parse_args()
     frame = pd.read_csv(args.input)
     splits = pd.read_csv(args.splits)
     results, metadata = run_tabicl(
         frame, splits, seed=args.seed, n_estimators=args.n_estimators,
         device=args.device, n_jobs=args.n_jobs,
+        prediction_batch_size=args.prediction_batch_size,
     )
     args.output.mkdir(parents=True, exist_ok=True)
     metadata["dataset_sha256"] = sha256_file(args.input)
