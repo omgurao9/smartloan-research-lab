@@ -24,6 +24,7 @@ dependencies = [
 dev = ["pytest>=8.0", "ruff>=0.5"]
 boosting = ["xgboost>=2.0", "catboost>=1.2", "lightgbm>=4.3"]
 optimization = ["optuna>=3.6"]
+neural = ["tabm>=0.0.1"]
 explainability = ["shap>=0.45"]
 
 [project.scripts]
@@ -36,6 +37,7 @@ smartloan-xgboost = "research_lab.xgboost_benchmark:main"
 smartloan-calibration-audit = "research_lab.calibration_audit:main"
 smartloan-stacking = "research_lab.stacking:main"
 smartloan-tabicl = "research_lab.tabicl_benchmark:main"
+smartloan-tabm = "research_lab.tabm_benchmark:main"
 
 [tool.setuptools.packages.find]
 where = ["ml"]
