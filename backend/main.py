@@ -153,12 +153,11 @@ def predict(applicant: Applicant):
     if "1" not in probability_by_class or not np.isfinite(probabilities).all():
         raise HTTPException(500, "The model returned an invalid probability vector.")
     probability = probability_by_class["1"]
-    # Transparent demo-only affordability adjustment:
-    # +1 percentage point for each 1.0x annual-income / loan-amount ratio,
-    # capped at +10 percentage points. The underlying ML probability is retained.
+    # Separate, monotonic affordability indicator. For a fixed loan amount,
+    # this score strictly increases with annual income and remains in [0, 100).
+    # It is intentionally NOT presented as an ML approval probability.
     income_to_loan_ratio = float(features["person_income"] / features["loan_amnt"])
-    affordability_adjustment_pp = min(10.0, income_to_loan_ratio)
-    adjusted_score = min(1.0, probability + affordability_adjustment_pp / 100.0)
+    affordability_score = 100.0 * income_to_loan_ratio / (1.0 + income_to_loan_ratio)
     warnings = []
     reference = _reference_frame
     for field, label in (("person_income", "Annual income"), ("loan_amnt", "Loan amount"),
@@ -195,10 +194,9 @@ def predict(applicant: Applicant):
     }
     return {
         "class_1_probability": probability,
-        "adjusted_class_1_score": adjusted_score,
+        "income_to_loan_affordability_score": affordability_score,
         "income_to_loan_ratio": income_to_loan_ratio,
-        "affordability_adjustment_percentage_points": affordability_adjustment_pp,
-        "scoring_note": "Demo heuristic only: adds 1 percentage point per 1.0x annual-income/loan-amount ratio, capped at +10 points. This is not learned, calibrated, or validated as a lending rule.",
+        "scoring_note": "Standalone demonstration affordability indicator: 100 × ratio / (1 + ratio), where ratio = annual income / loan amount. It always increases as income increases for a fixed loan amount. It is not an ML approval probability or a validated lending rule.",
         "class_0_probability": probability_by_class.get("0"),
         "threshold": 0.5,
         "decision": "CLASS_1_MORE_LIKELY" if probability >= 0.5 else "CLASS_0_MORE_LIKELY",
