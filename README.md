@@ -52,6 +52,19 @@ scripts/                 Reproducible command-line entry points
 tests/                   Automated tests
 ```
 
+## Local research dashboard
+
+A Streamlit frontend is included at `app.py`. It presents the completed experiment journey, final test metrics, model comparisons, confusion matrices, and bootstrap confidence intervals.
+
+Run it from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[dashboard]"
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Then open the local URL printed by Streamlit (normally `http://localhost:8501`). The dashboard uses the documented, committed experiment results; it does not need the raw dataset or model artifacts to display the final research findings. It is a results-presentation frontend, not a live applicant-scoring interface.
+
 ## Current status
 
 **Phase 1 — foundation and data audit.** The first milestone establishes project conventions and a reproducible audit. Model benchmarking begins only after the data audit and split protocol are reviewed.
